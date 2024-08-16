@@ -43,16 +43,25 @@ runs:
         cd ${{ inputs.project_path }}
         pnpm install
 
+    # - name: Test eas.json
+    #   uses: actions/github-script@v7
+    #   env:
+    #     INPUT_PATH: ${{ inputs.project_path }}      
+    #   with:
+    #     script: |
+    #       const editJsonFile = require("edit-json-file")
+
+    #       console.log('TONTEST', core.getInput('path'))
+
+    #       console.log
+
     - name: Test eas.json
-      uses: actions/github-script@v7
-      env:
-        INPUT_PATH: ${{ inputs.project_path }}      
-      with:
-        script: |
-          const editJsonFile = require("edit-json-file")
-
-          console.log('TONTEST', core.getInput('path'))
-
+      shell: bash
+      run: |
+        cd ${{ inputs.project_path }}
+        which jq
+        which sponge
+        
 
     # - name: EAS Build
     #   shell: bash
