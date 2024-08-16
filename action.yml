@@ -55,13 +55,17 @@ runs:
 
     #       console.log
 
+    - name: Install jq
+      shell: bash
+      run: sudo apt-get install -y jq
+
     - name: Test eas.json
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
         which jq
         which sponge
-        
+
 
     # - name: EAS Build
     #   shell: bash
