@@ -31,6 +31,19 @@ runs:
       shell: bash
       run: npm install -g pnpm
 
+    - name: Setup Expo and EAS
+      uses: expo/expo-github-action@v8
+      with:
+        eas-version: latest
+        token: ${{ inputs.expo-token }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd ${{ inputs.project_path }}
+        pnpm install
+
+    - run: npm install edit-json-file
     - name: Test eas.json
       uses: actions/github-script@v7
       env:
@@ -41,17 +54,6 @@ runs:
 
           console.log('TONTEST', core.getInput('path'))
 
-    # - name: Setup Expo and EAS
-    #   uses: expo/expo-github-action@v8
-    #   with:
-    #     eas-version: latest
-    #     token: ${{ inputs.expo-token }}
-
-    # - name: Install dependencies
-    #   shell: bash
-    #   run: |
-    #     cd ${{ inputs.project_path }}
-    #     pnpm install
 
     # - name: EAS Build
     #   shell: bash
