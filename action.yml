@@ -31,17 +31,17 @@ runs:
       shell: bash
       run: npm install -g pnpm
 
-    - name: Setup Expo and EAS
-      uses: expo/expo-github-action@v8
-      with:
-        eas-version: latest
-        token: ${{ inputs.expo-token }}
+    # - name: Setup Expo and EAS
+    #   uses: expo/expo-github-action@v8
+    #   with:
+    #     eas-version: latest
+    #     token: ${{ inputs.expo-token }}
 
-    - name: Install dependencies
-      shell: bash
-      run: |
-        cd ${{ inputs.project_path }}
-        pnpm install
+    # - name: Install dependencies
+    #   shell: bash
+    #   run: |
+    #     cd ${{ inputs.project_path }}
+    #     pnpm install
 
     # - name: Test eas.json
     #   uses: actions/github-script@v7
@@ -55,17 +55,17 @@ runs:
 
     #       console.log
 
-    - name: Install jq
-      shell: bash
-      run: sudo apt-get install -y jq
+    # - name: Install jq
+    #   shell: bash
+    #   run: sudo apt-get install -y jq
 
     - name: Test eas.json
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
-        which jq
-        which sponge
+        jq '.cli.appVersionSource = "abcde"' eas.json | sponge eas.json
 
+        cat eas.json
 
     # - name: EAS Build
     #   shell: bash
