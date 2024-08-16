@@ -55,9 +55,9 @@ runs:
 
     #       console.log
 
-    # - name: Install jq
-    #   shell: bash
-    #   run: sudo apt-get install -y jq
+    - name: Install jq and sponge
+      shell: bash
+      run: sudo apt-get install -y jq sponge
 
     - name: Test eas.json
       shell: bash
