@@ -63,9 +63,11 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
-        jq '.cli.appVersionSource = "abcde"' eas.json | sponge eas.json
+        jq '.build.feature.env.EXPO_PUBLIC_NAME = "Ton Testing"' eas.json | sponge eas.json
 
         cat eas.json
+
+        eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
 
     # - name: EAS Build
     #   shell: bash
