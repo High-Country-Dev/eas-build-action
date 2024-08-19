@@ -50,7 +50,7 @@ runs:
     - name: Test eas.json
       shell: bash
       run: |
-        EVENT=${{ toJson(github.event) }}
+        EVENT=${{ github.event }}
         TEST=$(jq '.after' <<< "$EVENT")
         TEST2=$(jq '.pull_request' <<< "$EVENT")
 
