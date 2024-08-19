@@ -51,10 +51,9 @@ runs:
       shell: bash
       run: |
         
-        TEST=$(jq '.after' <<< "${{ github.event }}")
-        TEST2=$(jq '.pull_request' <<< "${{ github.event }}")
+        TEST=$(jq '.after' <<< ${{ github.event }})
 
-        echo $TEST $TEST2
+        echo $TEST
 
     # - name: EAS Build
     #   shell: bash
