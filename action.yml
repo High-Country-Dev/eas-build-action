@@ -50,16 +50,11 @@ runs:
     - name: Test eas.json
       shell: bash
       run: |
-        cd ${{ inputs.project_path }}
-        jq '.build.feature.env.EXPO_PUBLIC_NAME = "Ton Testing"' eas.json | sponge eas.json
+        EVENT=${{ toJson(github.event) }}
+        TEST=$(jq '.after' <<< "$EVENT")
+        TEST2=$(jq '.pull_request' <<< "$EVENT")
 
-        echo ${{ github.event.pull_request.title }}
-
-        echo ${{ toJson(github.event) }}
-
-        #cat eas.json
-
-        #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
+        echo $TEST $TEST2
 
     # - name: EAS Build
     #   shell: bash
