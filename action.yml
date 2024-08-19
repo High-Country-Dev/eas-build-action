@@ -50,12 +50,16 @@ runs:
     - name: Test eas.json
       shell: bash
       run: |
-        
-        if [ -z "${{ github.event.pull_request }}" ] ; then
+
+        if [ ! -z "${{ github.event }}" ] ; then
+          echo "has event"
+        fi
+
+        if [ ! -z "${{ github.event.pull_request }}" ] ; then
           echo "has pull request"
         fi
         
-        if [ -z "${{ github.event.after }}" ] ; then
+        if [ ! -z "${{ github.event.after }}" ] ; then
           echo "has after"
         fi
 
