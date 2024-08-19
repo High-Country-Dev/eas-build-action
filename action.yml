@@ -53,9 +53,11 @@ runs:
         cd ${{ inputs.project_path }}
         jq '.build.feature.env.EXPO_PUBLIC_NAME = "Ton Testing"' eas.json | sponge eas.json
 
-        cat eas.json
+        echo ${{ github.event.pull_request.title }}
 
-        eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
+        #cat eas.json
+
+        #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
 
     # - name: EAS Build
     #   shell: bash
