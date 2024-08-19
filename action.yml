@@ -55,6 +55,8 @@ runs:
 
         echo ${{ github.event.pull_request.title }}
 
+        echo ${{ github.event }}
+
         #cat eas.json
 
         #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
