@@ -55,7 +55,7 @@ runs:
 
         echo ${{ github.event.pull_request.title }}
 
-        echo ${{ github.event }}
+        cat ${{ github.event }}
 
         #cat eas.json
 
