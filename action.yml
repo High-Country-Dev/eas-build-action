@@ -63,6 +63,7 @@ runs:
           echo "has after"
         fi
 
+        cd ${{ inputs.project_path }}
         eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
 
     # - name: EAS Build
