@@ -45,7 +45,7 @@ runs:
 
     - name: Install jq and sponge
       shell: bash
-      run: sudo apt-get install -y moreutils magick
+      run: sudo apt-get install -y moreutils imagemagick
 
     - name: Test eas.json
       shell: bash
