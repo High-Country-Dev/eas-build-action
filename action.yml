@@ -51,9 +51,13 @@ runs:
       shell: bash
       run: |
         
-        TEST=$(jq '.after' <<< ${{ github.event }})
-
-        echo $TEST
+        if [ -z "${{ github.event.pull_request }}" ] ; then
+          echo "has pull request"
+        fi
+        
+        if [ -z "${{ github.event.after }}" ] ; then
+          echo "has after"
+        fi
 
     # - name: EAS Build
     #   shell: bash
