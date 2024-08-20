@@ -53,14 +53,10 @@ runs:
 
         if [ ! -z "${{ github.event.pull_request }}" ] ; then
           cd ${{ inputs.project_path }}
+          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
+          jq '.build.feature.env.EXPO_PUBLIC_NAME = "${${{ github.event.repository.name }}^} ${{ github.event.repository.name }} $ID"' eas.json | sponge eas.json
 
-
-          jq '.build.feature.env.EXPO_PUBLIC_NAME = "Ton Testing"' eas.json | sponge eas.json
-
-          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+') 
-
-          echo $ID
-
+          cat eas.json
         fi
         
         #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
