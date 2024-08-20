@@ -57,7 +57,7 @@ runs:
 
           jq '.build.feature.env.EXPO_PUBLIC_NAME = "Ton Testing"' eas.json | sponge eas.json
 
-          ID=$(echo ${{ github.event.pull_request }} | | grep -oP '\[MD-\K[0-9]+') 
+          ID=$(echo ${{ github.event.pull_request.title }} | | grep -oP '\[MD-\K[0-9]+') 
 
           echo $ID
 
