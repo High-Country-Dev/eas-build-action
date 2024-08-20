@@ -54,7 +54,8 @@ runs:
         if [ ! -z "${{ github.event.pull_request }}" ] ; then
           cd ${{ inputs.project_path }}
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
-          jq '.build.feature.env.EXPO_PUBLIC_NAME = "${${{ github.event.repository.name }}^} ${{ github.event.repository.name }} $ID"' eas.json | sponge eas.json
+          PROJECT_NAME="${{ github.event.repository.name }} $ID"
+          jq '.build.feature.env.EXPO_PUBLIC_NAME = "${PROJECT_NAME^}"' eas.json | sponge eas.json
 
           cat eas.json
         fi
