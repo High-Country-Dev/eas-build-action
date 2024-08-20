@@ -47,24 +47,19 @@ runs:
       shell: bash
       run: sudo apt-get install -y moreutils imagemagick
 
-    - name: Test eas.json
+    - name: Update eas.json
       shell: bash
       run: |
 
-        if [ ! -z "${{ github.event }}" ] ; then
-          echo "has event"
-        fi
-
         if [ ! -z "${{ github.event.pull_request }}" ] ; then
-          echo "has pull request"
+          cd ${{ inputs.project_path }}
+          jq '.build.feature.env.EXPO_PUBLIC_NAME = "Ton Testing"' eas.json | sponge eas.json
+
+          echo "Testing ${{ github.event.pull_request.title }}" 
+
         fi
         
-        if [ ! -z "${{ github.event.after }}" ] ; then
-          echo "has after"
-        fi
-
-        cd ${{ inputs.project_path }}
-        eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
+        #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
 
     # - name: EAS Build
     #   shell: bash
