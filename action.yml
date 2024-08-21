@@ -59,7 +59,6 @@ runs:
           eas build --platform all --profile development --no-wait --auto-submit --non-interactive
         elif [ ! -z "${{ github.event.pull_request }}" ]; then
           # Get public name from PR title
-          cd ${{ inputs.project_path }}
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
