@@ -74,6 +74,8 @@ runs:
           #   /repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments | jq '@json')
           #sleep 1
 
+          echo "testing entire data - $COMMENTS"
+
           for i in "${COMMENTS[@]}"
           do
             echo "TEST"
