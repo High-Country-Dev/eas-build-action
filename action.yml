@@ -73,7 +73,7 @@ runs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments | jq '@json')
 
-          echo $TEST2
+          echo "testing entire data - $TEST2"
 
           # for i in "${TEST2[@]}"
           # do
