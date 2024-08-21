@@ -71,17 +71,17 @@ runs:
           TEST2=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/High-Country-Dev/hivetracks/issues/$PR/comments) | jq '@json'
+            /repos/High-Country-Dev/hivetracks/issues/$PR/comments)
 
-          #echo $TEST2
+          echo $TEST2 | jq '@json' | while read -r repo; do echo "do something with $repo"; done
 
-          for i in "${TEST2[@]}"
-          do
-            echo "TEST"
-            echo $i
-            echo "TEST2"
-            # or do whatever with individual element of the array
-          done
+          # for i in "${TEST2[@]}"
+          # do
+          #   echo "TEST"
+          #   echo $i | jq '@json'
+          #   echo "TEST2"
+          #   # or do whatever with individual element of the array
+          # done
 
           #cat eas.json
         fi
