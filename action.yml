@@ -59,7 +59,7 @@ runs:
           
           jq --arg a "$PUBLIC_NAME" '.build.feature.env.EXPO_PUBLIC_NAME = $a' eas.json | sponge eas.json
 
-          ${{ github.event.comment }}
+          echo ${{ github.event.comment }}
 
           #cat eas.json
         fi
