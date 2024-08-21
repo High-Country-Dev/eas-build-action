@@ -43,7 +43,7 @@ runs:
         cd ${{ inputs.project_path }}
         pnpm install
 
-    - name: Install jq and sponge
+    - name: Install sponge and imagemagick
       shell: bash
       run: sudo apt-get install -y moreutils imagemagick
         
