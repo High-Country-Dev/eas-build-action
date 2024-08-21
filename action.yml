@@ -75,9 +75,7 @@ runs:
 
           #echo $TEST2 | jq '@json' | while read -r repo; do echo "do something with $repo"; done
           
-          TEST3=$(echo $TEST2 | jq '@json')
-
-          echo $TEST3
+          echo $TEST2 | jq '@json'
 
 
           # for i in "${TEST2[@]}"
