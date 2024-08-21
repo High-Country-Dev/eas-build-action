@@ -59,7 +59,9 @@ runs:
           
           jq --arg a "$PUBLIC_NAME" '.build.feature.env.EXPO_PUBLIC_NAME = $a' eas.json | sponge eas.json
 
-          cat eas.json
+          ${{ github.event.comment }}
+
+          #cat eas.json
         fi
         
         #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
