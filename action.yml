@@ -48,8 +48,6 @@ runs:
       run: sudo apt-get install -y moreutils imagemagick
 
     - name: Update eas.json
-      env:
-        GH_TOKEN: ${{ inputs.github-token }}
       shell: bash
       run: |
 
@@ -58,8 +56,7 @@ runs:
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
-          PR="${{ github.event.number }}"
-          
+          PR="${{ github.event.number }}"          
           jq --arg a "$PUBLIC_NAME" '.build.feature.env.EXPO_PUBLIC_NAME = $a' eas.json | sponge eas.json
 
           COMMENTS=$(curl -L \
@@ -68,24 +65,11 @@ runs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments?per_page=50)
 
-          # TEST2=$(gh api \
-          #   -H "Accept: application/vnd.github+json" \
-          #   -H "X-GitHub-Api-Version: 2022-11-28" \
-          #   /repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments | jq '@json')
-          #sleep 1
+          BODY=$(echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .body')
+          LINK=$(echo $BODY | grep -oP '\| \[Visit Preview]\(\K[^\)]+') 
+          URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
 
-          echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .body'
-
-          # echo "testing entire data - $COMMENTS"
-
-          # for i in "${COMMENTS[@]}"
-          # do
-          #   echo "TEST"
-          #   echo "$i"
-          #   echo "TEST2"
-          #   # or do whatever with individual element of the array
-          # done
-
+          echo $URL
           #cat eas.json
           
         fi
