@@ -75,11 +75,11 @@ runs:
 
           for i in "${TEST2[@]}"
           do
+            echo "TEST"
             echo "$i"
+            echo "TEST2"
             # or do whatever with individual element of the array
           done
-
-          echo $TEST2
 
           #cat eas.json
         fi
