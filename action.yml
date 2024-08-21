@@ -62,7 +62,7 @@ runs:
           
           jq --arg a "$PUBLIC_NAME" '.build.feature.env.EXPO_PUBLIC_NAME = $a' eas.json | sponge eas.json
 
-          TEST2=$(curl -L \
+          COMMENTS=$(curl -L \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ inputs.github-token }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -74,15 +74,13 @@ runs:
           #   /repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments | jq '@json')
           #sleep 1
 
-          echo "testing entire data - $TEST2"
-
-          # for i in "${TEST2[@]}"
-          # do
-          #   echo "TEST"
-          #   echo "$i"
-          #   echo "TEST2"
-          #   # or do whatever with individual element of the array
-          # done
+          for i in "${COMMENTS[@]}"
+          do
+            echo "TEST"
+            echo "$i"
+            echo "TEST2"
+            # or do whatever with individual element of the array
+          done
 
           #cat eas.json
         fi
