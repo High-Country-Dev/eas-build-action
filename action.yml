@@ -48,6 +48,8 @@ runs:
       run: sudo apt-get install -y moreutils imagemagick
 
     - name: Update eas.json
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
       shell: bash
       run: |
 
@@ -70,7 +72,7 @@ runs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/High-Country-Dev/hivetracks/issues/comments)
 
-          echo $TEST $TEST2
+          echo $TEST2
 
           #cat eas.json
         fi
