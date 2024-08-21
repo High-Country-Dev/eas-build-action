@@ -71,7 +71,7 @@ runs:
           TEST2=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/High-Country-Dev/hivetracks/issues/$PR/comments)
+            /repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments)
 
           #echo $TEST2 | jq '@json' | while read -r repo; do echo "do something with $repo"; done
           
