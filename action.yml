@@ -87,6 +87,7 @@ runs:
           # done
 
           #cat eas.json
+          
         fi
         
         #eas build --platform android --profile feature --no-wait --auto-submit --non-interactive
