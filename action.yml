@@ -45,7 +45,7 @@ runs:
 
     - name: Install sponge, imagemagick etc
       shell: bash
-      run: sudo apt-get install -y moreutils imagemagick fonts-freefont-otf
+      run: sudo apt-get install -y moreutils imagemagick ghostscript fonts-freefont-otf
         
     - name: EAS Build
       shell: bash
