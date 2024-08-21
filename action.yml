@@ -74,7 +74,7 @@ runs:
           #   /repos/High-Country-Dev/hivetracks/issues/${{ github.event.number }}/comments | jq '@json')
           #sleep 1
 
-          echo $TEST | jq '.[] | select(.user.login == "vercel[bot]") | .'
+          echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .'
 
           # echo "testing entire data - $COMMENTS"
 
