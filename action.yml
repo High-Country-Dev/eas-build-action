@@ -97,8 +97,8 @@ runs:
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ inputs.github-token }}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/repos/{{ github.repository }}/issues/${{ github.event.number }}/comments \
-              -d '{"body":"Android build: $ANDROID_BUILD_LINK"}'
+              -d '{"body":"Android build: $ANDROID_BUILD_LINK"}' \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
           fi
 
           if [ ! -z "$IOS_BUILD_LINK" ]
@@ -108,10 +108,9 @@ runs:
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ inputs.github-token }}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/repos/{{ github.repository }}/issues/${{ github.event.number }}/comments \
-              -d '{"body":"iOS build: $IOS_BUILD_LINK"}'
+              -d '{"body":"iOS build: $IOS_BUILD_LINK"}' \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
           fi
-
 
         else
           echo "Branch not recognized for EAS build"
