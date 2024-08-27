@@ -88,8 +88,8 @@ runs:
           EAS_STDOUT=$(eas help)
           echo "$EAS_STDOUT"
 
-          # ANDROID_BUILD_LINK=$(echo $TEST | grep -oP 'Android build details: \K[^ )]+')
-          # IOS_BUILD_LINK=$(echo $TEST | grep -oP 'iOS build details: \K[^ )]+') 
+          ANDROID_BUILD_LINK=$(echo $TEST | grep -oP 'Android build details: \K[^ )]+')
+          IOS_BUILD_LINK=$(echo $TEST | grep -oP 'iOS build details: \K[^ )]+') 
 
           # if [ ! -z "$ANDROID_BUILD_LINK" ]
           # then
