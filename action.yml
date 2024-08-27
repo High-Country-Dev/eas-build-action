@@ -84,8 +84,9 @@ runs:
           jq '.build.feature.env.EXPO_PUBLIC_ICON = "./src/assets/app/icon-feature.png"' eas.json | sponge eas.json
           jq '.build.feature.env.EXPO_PUBLIC_ADAPTIVE_ICON = "./src/assets/app/adaptive-icon-feature.png"' eas.json | sponge eas.json
 
-          EAS_STDOUT=$(eas build --platform all --profile feature --no-wait --auto-submit --non-interactive)
-          #echo "$EAS_STDOUT"
+          #EAS_STDOUT=$(eas build --platform all --profile feature --no-wait --auto-submit --non-interactive)
+          EAS_STDOUT=$(eas help)
+          echo "$EAS_STDOUT"
 
           # ANDROID_BUILD_LINK=$(echo $TEST | grep -oP 'Android build details: \K[^ )]+')
           # IOS_BUILD_LINK=$(echo $TEST | grep -oP 'iOS build details: \K[^ )]+') 
