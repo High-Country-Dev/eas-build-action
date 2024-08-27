@@ -84,38 +84,33 @@ runs:
           jq '.build.feature.env.EXPO_PUBLIC_ICON = "./src/assets/app/icon-feature.png"' eas.json | sponge eas.json
           jq '.build.feature.env.EXPO_PUBLIC_ADAPTIVE_ICON = "./src/assets/app/adaptive-icon-feature.png"' eas.json | sponge eas.json
 
-          #EAS_STDOUT=$(eas build --platform all --profile feature --no-wait --auto-submit --non-interactive)
-          EAS_STDOUT=$(eas help)
+          EAS_STDOUT=$(eas build --platform all --profile feature --no-wait --auto-submit --non-interactive)
           echo "$EAS_STDOUT"
 
-          ANDROID_BUILD_LINK=$(echo $TEST | grep -oP 'Android build details: \K[^ )]+')
-          IOS_BUILD_LINK=$(echo $TEST | grep -oP 'iOS build details: \K[^ )]+') 
+          ANDROID_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'Android build details: \K[^ )]+')
+          IOS_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'iOS build details: \K[^ )]+') 
 
-          # if [ ! -z "$ANDROID_BUILD_LINK" ]
-          # then
-          #   echo "TESTING2 $ANDROID_BUILD_LINK " 
+          if [ ! -z "$ANDROID_BUILD_LINK" ]
+          then
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ inputs.github-token }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -d '{"body":"Android build: $ANDROID_BUILD_LINK"}' \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
+          fi
 
-          #   # curl -L \
-          #   #   -X POST \
-          #   #   -H "Accept: application/vnd.github+json" \
-          #   #   -H "Authorization: Bearer ${{ inputs.github-token }}" \
-          #   #   -H "X-GitHub-Api-Version: 2022-11-28" \
-          #   #   -d '{"body":"Android build: $ANDROID_BUILD_LINK"}' \
-          #   #   https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
-          # fi
-
-          # if [ ! -z "$IOS_BUILD_LINK" ]
-          # then
-          #   echo "TESTING2 $IOS_BUILD_LINK" 
-
-          #   # curl -L \
-          #   #   -X POST \
-          #   #   -H "Accept: application/vnd.github+json" \
-          #   #   -H "Authorization: Bearer ${{ inputs.github-token }}" \
-          #   #   -H "X-GitHub-Api-Version: 2022-11-28" \
-          #   #   -d '{"body":"iOS build: $IOS_BUILD_LINK"}' \
-          #   #   https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
-          # fi
+          if [ ! -z "$IOS_BUILD_LINK" ]
+          then
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ inputs.github-token }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -d '{"body":"iOS build: $IOS_BUILD_LINK"}' \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
+          fi
 
         else
           echo "Branch not recognized for EAS build"
