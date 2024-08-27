@@ -98,6 +98,7 @@ runs:
               -H "Authorization: Bearer ${{ inputs.github-token }}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               -d "{\"body\":\"Android build: $ANDROID_BUILD_LINK\"}" \
+              -o /dev/null \
               https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
           fi
 
@@ -109,6 +110,7 @@ runs:
               -H "Authorization: Bearer ${{ inputs.github-token }}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               -d "{\"body\":\"iOS build: $IOS_BUILD_LINK\"}" \
+              -o /dev/null \
               https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
           fi
 
