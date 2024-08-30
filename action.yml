@@ -45,21 +45,49 @@ runs:
 
     - name: Install sponge, imagemagick etc
       shell: bash
-      run: sudo apt-get install -y moreutils imagemagick ghostscript fonts-freefont-otf
-        
+      run: sudo apt-get install -y moreutils imagemagick ghostscript fonts-freefont-otf expect
+
+    - name: Get version numbers
+      shell: bash
+      run: |
+        cd ${{ inputs.project_path }}
+        ANDROID_VERSION=$(pnpm -F expo exec eas build:version:get --platform android | grep "Android versionCode" | awk '{print $NF}')
+        IOS_VERSION=$(pnpm -F expo exec eas build:version:get --platform ios | grep "iOS buildNumber" | awk '{print $NF}')
+        CURRENT_VERSION=$(( ANDROID_VERSION > IOS_VERSION ? ANDROID_VERSION : IOS_VERSION ))
+        echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+        echo "CURRENT VERSION IS ${CURRENT_VERSION}"
+
+    - name: Set to latest version number
+      shell: bash
+      run: |
+        for platform in ios android
+        do
+          expect << EOF
+          set timeout -1
+          spawn pnpm -F expo exec eas build:version:set --platform $platform
+          expect "What version would you like to set?"
+          send "$CURRENT_VERSION\r"
+          expect eof
+        EOF
+        done
+
     - name: EAS Build
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
         if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
+          echo "CHANNEL=prod" >> $GITHUB_ENV
           eas build --platform all --profile production --no-wait --auto-submit --non-interactive
         elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+          echo "CHANNEL=staging" >> $GITHUB_ENV
           eas build --platform all --profile staging --no-wait --auto-submit --non-interactive
         elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+          echo "CHANNEL=dev" >> $GITHUB_ENV
           eas build --platform all --profile development --no-wait --auto-submit --non-interactive
         elif [ ! -z "${{ github.event.pull_request }}" ]; then
           # Get public name from PR title
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
+          echo "CHANNEL=feat-$ID" >> $GITHUB_ENV
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
           PR="${{ github.event.number }}"          
@@ -119,25 +147,8 @@ runs:
           exit 1
         fi
 
-    - name: Get version numbers
+    - name: Create tag
       shell: bash
       run: |
-        cd ${{ inputs.project_path }}
-        ANDROID_VERSION=$(eas build:version:get --platform android | grep "Android versionCode" | awk '{print $NF}')
-        IOS_VERSION=$(eas build:version:get --platform ios | grep "iOS buildNumber" | awk '{print $NF}')
-        echo "ANDROID_VERSION=$ANDROID_VERSION" >> $GITHUB_ENV
-        echo "IOS_VERSION=$IOS_VERSION" >> $GITHUB_ENV
-
-    - name: Create Android tag
-      shell: bash
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git tag build-android-${ANDROID_VERSION}
-        git push origin build-android-${ANDROID_VERSION}
-
-    - name: Create iOS tag
-      shell: bash
-      run: |
-        git tag build-ios-${IOS_VERSION}
-        git push origin build-ios-${IOS_VERSION}
+        git tag build-${CURRENT_VERSION}-${CHANNEL}
+        git push origin build-${CURRENT_VERSION}-${CHANNEL}
