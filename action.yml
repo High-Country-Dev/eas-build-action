@@ -29,7 +29,7 @@ runs:
 
     - name: Install pnpm
       shell: bash
-      run: npm install -g pnpm
+      run: npm install -g pnpm@8.15.4
 
     - name: Setup Expo and EAS
       uses: expo/expo-github-action@v8
@@ -107,39 +107,42 @@ runs:
           jq --arg a "$API_URL" '.build.feature.env.EXPO_PUBLIC_API_URL = $a' eas.json | sponge eas.json
 
           # Update app icon
-          convert src/assets/app/icon.png -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" src/assets/app/icon-feature.png
-          convert src/assets/app/adaptive-icon.png -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" src/assets/app/adaptive-icon-feature.png
-          jq '.build.feature.env.EXPO_PUBLIC_ICON = "./src/assets/app/icon-feature.png"' eas.json | sponge eas.json
-          jq '.build.feature.env.EXPO_PUBLIC_ADAPTIVE_ICON = "./src/assets/app/adaptive-icon-feature.png"' eas.json | sponge eas.json
+          ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ICON' eas.json | tr -d '"')
+          ADAPTIVE_ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ADAPTIVE_ICON' eas.json | tr -d '"')
+          convert $ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ICON_PATH"
+          convert $ADAPTIVE_ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ADAPTIVE_ICON_PATH"
 
           EAS_STDOUT=$(eas build --platform all --profile feature --no-wait --non-interactive)
           echo "$EAS_STDOUT"
 
           ANDROID_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'Android build details: \K[^ )]+')
+          echo "ANDROID_BUILD_LINK=$ANDROID_BUILD_LINK" >> $GITHUB_ENV
+          echo "ANDROID_BUILD_LINK IS ${ANDROID_BUILD_LINK}"
+
           IOS_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'iOS build details: \K[^ )]+') 
+          echo "IOS_BUILD_LINK=$IOS_BUILD_LINK" >> $GITHUB_ENV
+          echo "IOS_BUILD_LINK IS ${IOS_BUILD_LINK}"
 
-          if [ ! -z "$ANDROID_BUILD_LINK" ]
-          then
-            curl -L \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${{ inputs.github-token }}" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              -d "{\"body\":\"Android build: $ANDROID_BUILD_LINK\"}" \
-              -o /dev/null \
-              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
-          fi
+          BUILD_COMMENT_ID=$(echo "$COMMENTS" | jq '.[] | select(.body | startswith("Most recent mobile feature builds:")) | .id' | tail -n1)
 
-          if [ ! -z "$IOS_BUILD_LINK" ]
-          then
-            curl -L \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${{ inputs.github-token }}" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              -d "{\"body\":\"iOS build: $IOS_BUILD_LINK\"}" \
-              -o /dev/null \
-              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments              
+          if [ ! -z "$ANDROID_BUILD_LINK" ] || [ ! -z "$IOS_BUILD_LINK" ]; then
+            if [ -z "$BUILD_COMMENT_ID" ]; then
+              curl -L \
+                -X POST \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${{ inputs.github-token }}" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                -d "{\"body\":\"Most recent mobile feature builds:\niOS build: $IOS_BUILD_LINK\nAndroid build: $ANDROID_BUILD_LINK\"}" \
+                https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments
+            else
+              curl -L \
+                -X PATCH \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${{ inputs.github-token }}" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                -d "{\"body\":\"Most recent mobile feature builds:\niOS build: $IOS_BUILD_LINK\nAndroid build: $ANDROID_BUILD_LINK\"}" \
+                https://api.github.com/repos/${{ github.repository }}/issues/comments/$BUILD_COMMENT_ID
+            fi
           fi
 
         else
@@ -150,5 +153,9 @@ runs:
     - name: Create tag
       shell: bash
       run: |
+        git fetch --prune --unshallow --tags
+        if [ ! -z "${{ github.event.pull_request }}" ]; then
+          git checkout ${{ github.event.pull_request.head.sha }}
+        fi
         git tag build-${CURRENT_VERSION}-${CHANNEL}
         git push origin build-${CURRENT_VERSION}-${CHANNEL}
