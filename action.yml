@@ -157,5 +157,6 @@ runs:
         if [ ! -z "${{ github.event.pull_request }}" ]; then
           git checkout ${{ github.event.pull_request.head.sha }}
         fi
-        git tag build-${CURRENT_VERSION}-${CHANNEL}
-        git push origin build-${CURRENT_VERSION}-${CHANNEL}
+        # Add one since we incremented
+        git tag build-$((CURRENT_VERSION+1))-${CHANNEL}
+        git push origin build-$((CURRENT_VERSION+1))-${CHANNEL}
