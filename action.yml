@@ -11,6 +11,13 @@ inputs:
   expo-token:
     description: "Expo token"
     required: true
+  node-version:
+    description: "Optional node version. Default is 18"
+    default: "18"
+  pnpm-version:
+    description: "Optional pnpm version. Default is 8.15.4"
+    default: "8.15.4"
+
 runs:
   using: "composite"
   steps:
@@ -25,11 +32,11 @@ runs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: ${{ inputs.node-version }}
 
     - name: Install pnpm
       shell: bash
-      run: npm install -g pnpm@8.15.4
+      run: npm install -g pnpm@${{ inputs.pnpm-version }}
 
     - name: Setup Expo and EAS
       uses: expo/expo-github-action@v8
@@ -75,19 +82,33 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
+
+        # Get the keys and determine the correct environment name
+        EAS_KEYS=$(jq -r '.build | keys[]' eas.json)
+        EAS_ENV_DEV=`echo "$EAS_KEYS" | grep -E "^(dev|develop|development)$"` | head -n 1
+        EAS_ENV_STG=`echo "$EAS_KEYS" | grep -E "^(stg|stage|staging)$"` | head -n 1
+        EAS_ENV_PRD=`echo "$EAS_KEYS" | grep -E "^(prd|prod|production)$"` | head -n 1
+        EAS_ENV_FTE=`echo "$EAS_KEYS" | grep -E "^(fte|feat|feature)$"` | head -n 1
+
         if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
           echo "CHANNEL=prod" >> $GITHUB_ENV
-          eas build --platform all --profile production --no-wait --auto-submit --non-interactive
+          eas build --platform all --profile $EAS_ENV_PRD --no-wait --auto-submit --non-interactive
         elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
           echo "CHANNEL=staging" >> $GITHUB_ENV
-          eas build --platform all --profile staging --no-wait --auto-submit --non-interactive
+          eas build --platform all --profile $EAS_ENV_STG --no-wait --auto-submit --non-interactive
         elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
           echo "CHANNEL=dev" >> $GITHUB_ENV
-          eas build --platform all --profile development --no-wait --auto-submit --non-interactive
+          eas build --platform all --profile $EAS_ENV_DEV --no-wait --auto-submit --non-interactive
         elif [ ! -z "${{ github.event.pull_request }}" ]; then
           # Get public name from PR title
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
-          echo "CHANNEL=feat-$ID" >> $GITHUB_ENV
+
+          if [ -z "$ID" ]; then
+            echo "CHANNEL=feat" >> $GITHUB_ENV
+          else
+            echo "CHANNEL=feat-$ID" >> $GITHUB_ENV
+          fi
+
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
           PR="${{ github.event.number }}"          
@@ -112,7 +133,7 @@ runs:
           convert $ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ICON_PATH"
           convert $ADAPTIVE_ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ADAPTIVE_ICON_PATH"
 
-          EAS_STDOUT=$(eas build --platform all --profile feature --no-wait --non-interactive)
+          EAS_STDOUT=$(eas build --platform all --profile $EAS_ENV_FTE --no-wait --non-interactive)
           echo "$EAS_STDOUT"
 
           ANDROID_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'Android build details: \K[^ )]+')
@@ -146,7 +167,10 @@ runs:
           fi
 
         else
-          echo "Branch not recognized for EAS build"
+          # Get the keys
+          echo "Branch not recognized for EAS build defaulting to production build with out auto submit"
+          echo "CHANNEL=prod" >> $GITHUB_ENV
+          eas build --platform all --profile $EAS_ENV_PRD --no-wait --non-interactive
           exit 1
         fi
 
