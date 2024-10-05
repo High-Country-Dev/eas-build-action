@@ -85,10 +85,15 @@ runs:
 
         # Get the keys and determine the correct environment name
         EAS_KEYS=$(jq -r '.build | keys[]' eas.json)
-        EAS_ENV_DEV=`echo "$EAS_KEYS" | grep -E "^(dev|develop|development)$"` | head -n 1
-        EAS_ENV_STG=`echo "$EAS_KEYS" | grep -E "^(stg|stage|staging)$"` | head -n 1
-        EAS_ENV_PRD=`echo "$EAS_KEYS" | grep -E "^(prd|prod|production)$"` | head -n 1
-        EAS_ENV_FTE=`echo "$EAS_KEYS" | grep -E "^(fte|feat|feature)$"` | head -n 1
+        EAS_ENV_DEV=`echo "$EAS_KEYS" | grep -E "^(dev|develop|development)$" | head -n 1` 
+        EAS_ENV_STG=`echo "$EAS_KEYS" | grep -E "^(stg|stage|staging)$" | head -n 1` 
+        EAS_ENV_PRD=`echo "$EAS_KEYS" | grep -E "^(prd|prod|production)$" | head -n 1` 
+        EAS_ENV_FTE=`echo "$EAS_KEYS" | grep -E "^(fte|feat|feature)$" | head -n 1` 
+
+        echo "EAS_ENV_DEV: $EAS_ENV_DEV"
+        echo "EAS_ENV_STG: $EAS_ENV_STG"
+        echo "EAS_ENV_PRD: $EAS_ENV_PRD"
+        echo "EAS_ENV_FTE: $EAS_ENV_FTE"
 
         if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
           echo "CHANNEL=prod" >> $GITHUB_ENV
@@ -102,12 +107,15 @@ runs:
         elif [ ! -z "${{ github.event.pull_request }}" ]; then
           # Get public name from PR title
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
+          echo "Got id $ID"
 
           if [ -z "$ID" ]; then
-            echo "CHANNEL=feat" >> $GITHUB_ENV
+            CHANNEL=feat
           else
-            echo "CHANNEL=feat-$ID" >> $GITHUB_ENV
+            CHANNEL=feat-$ID
           fi
+          echo "CHANNEL=$CHANNEL" >> $GITHUB_ENV
+          echo "CHANNEL IS $CHANNEL"
 
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
@@ -126,15 +134,27 @@ runs:
           URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
           API_URL="https://$(echo $URL | cut -d/ -f3)"
           jq --arg a "$API_URL" '.build.feature.env.EXPO_PUBLIC_API_URL = $a' eas.json | sponge eas.json
+          echo "API URL: $API_URL"
 
           # Update app icon
           ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ICON' eas.json | tr -d '"')
           ADAPTIVE_ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ADAPTIVE_ICON' eas.json | tr -d '"')
           convert $ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ICON_PATH"
           convert $ADAPTIVE_ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ADAPTIVE_ICON_PATH"
+          echo "ICON_PATH: $ICON_PATH"
 
-          EAS_STDOUT=$(eas build --platform all --profile $EAS_ENV_FTE --no-wait --non-interactive)
+          echo "EAS BUILD COMMAND: eas build --platform all --profile $EAS_ENV_FTE --no-wait --non-interactive"
+
+          EAS_STDOUT=$(eas build --platform all --profile $EAS_ENV_FTE --no-wait --non-interactive 2>&1)
+          EAS_EXIT_CODE=$?
+
+          echo "EAS Build Output:"
           echo "$EAS_STDOUT"
+
+          if [ $EAS_EXIT_CODE -ne 0 ]; then
+            echo "EAS build failed with exit code $EAS_EXIT_CODE"
+            exit $EAS_EXIT_CODE
+          fi
 
           ANDROID_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'Android build details: \K[^ )]+')
           echo "ANDROID_BUILD_LINK=$ANDROID_BUILD_LINK" >> $GITHUB_ENV
@@ -171,7 +191,6 @@ runs:
           echo "Branch not recognized for EAS build defaulting to production build with out auto submit"
           echo "CHANNEL=prod" >> $GITHUB_ENV
           eas build --platform all --profile $EAS_ENV_PRD --no-wait --non-interactive
-          exit 1
         fi
 
     - name: Create tag
