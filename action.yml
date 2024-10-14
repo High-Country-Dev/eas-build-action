@@ -87,7 +87,7 @@ runs:
         cd ${{ inputs.project_path }}
 
         # Choose the correct EAS channel
-        if [ "${{ inputs.eas-channel }}" == "none" ]; then
+        if [ "${{ inputs.eas-channel }}" == "none" ] || [ -z "${{ inputs.eas-channel }}" ]; then
           # Default to the branch
           if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
             CHANNEL=prd
