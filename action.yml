@@ -151,11 +151,15 @@ runs:
 
           # Get API URL from Vercel bot PR comment
           BODY=$(echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .body')
+          echo "BODY: $BODY"
           LINK=$(echo $BODY | grep -oP '\| \[Visit Preview]\(\K[^\)]+') 
+          echo "LINK: $LINK"
           URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
+          echo "URL: $URL"
           API_URL="https://$(echo $URL | cut -d/ -f3)"
+          echo "API_URL: $API_URL"
           jq --arg a "$API_URL" '.build.feature.env.EXPO_PUBLIC_API_URL = $a' eas.json | sponge eas.json
-          echo "API URL: $API_URL"
+          echo "Updated API URL to $API_URL"
 
           # Update app icon
           ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ICON' eas.json | tr -d '"')
