@@ -17,6 +17,9 @@ inputs:
   pnpm-version:
     description: "Optional pnpm version. Default is 8.15.4"
     default: "8.15.4"
+  eas-channel:
+    description: "Optional EAS channel (dev, stg, prd, none). Default is 'none' which defaults to the branch"
+    default: "none"
 
 runs:
   using: "composite"
@@ -83,6 +86,26 @@ runs:
       run: |
         cd ${{ inputs.project_path }}
 
+        # Choose the correct EAS channel
+        if [ "${{ inputs.eas-channel }}" == "none" ]; then
+          # Default to the branch
+          if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
+            CHANNEL=prd
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            CHANNEL=stg
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            CHANNEL=dev
+          elif [ ! -z "${{ github.event.pull_request }}" ]; then
+            CHANNEL=fte
+          else
+            echo "Branch not recognized for EAS build defaulting to production build with out auto submit"
+            CHANNEL=prd
+            AUTO_SUBMIT=false
+          fi
+        else
+          CHANNEL="${{ inputs.eas-channel }}"
+        fi
+
         # Get the keys and determine the correct environment name
         EAS_KEYS=$(jq -r '.build | keys[]' eas.json)
         EAS_ENV_DEV=`echo "$EAS_KEYS" | grep -E "^(dev|develop|development)$" | head -n 1` 
@@ -95,16 +118,13 @@ runs:
         echo "EAS_ENV_PRD: $EAS_ENV_PRD"
         echo "EAS_ENV_FTE: $EAS_ENV_FTE"
 
-        if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
-          echo "CHANNEL=prod" >> $GITHUB_ENV
+        if [[ "$CHANNEL" == "prd" ]]; then
           eas build --platform all --profile $EAS_ENV_PRD --no-wait --auto-submit --non-interactive
-        elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-          echo "CHANNEL=staging" >> $GITHUB_ENV
+        elif [[ "$CHANNEL" == "stg" ]]; then
           eas build --platform all --profile $EAS_ENV_STG --no-wait --auto-submit --non-interactive
-        elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-          echo "CHANNEL=dev" >> $GITHUB_ENV
+        elif [[ "$CHANNEL" == "dev" ]]; then
           eas build --platform all --profile $EAS_ENV_DEV --no-wait --auto-submit --non-interactive
-        elif [ ! -z "${{ github.event.pull_request }}" ]; then
+        elif [[ "$CHANNEL" == "fte" ]]; then
           # Get public name from PR title
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
           echo "Got id $ID"
@@ -114,7 +134,6 @@ runs:
           else
             CHANNEL=feat-$ID
           fi
-          echo "CHANNEL=$CHANNEL" >> $GITHUB_ENV
           echo "CHANNEL IS $CHANNEL"
 
           PROJECT_NAME="${{ github.event.repository.name }}"
@@ -187,11 +206,12 @@ runs:
           fi
 
         else
-          # Get the keys
-          echo "Branch not recognized for EAS build defaulting to production build with out auto submit"
-          echo "CHANNEL=prod" >> $GITHUB_ENV
-          eas build --platform all --profile $EAS_ENV_PRD --no-wait --non-interactive
+          echo "Path not recognized for EAS build; erroring"
+          exit 1
         fi
+
+        # Storing the channel in the environment for the next step
+        echo "CHANNEL=$CHANNEL" >> $GITHUB_ENV
 
     - name: Create tag
       shell: bash
@@ -201,5 +221,5 @@ runs:
           git checkout ${{ github.event.pull_request.head.sha }}
         fi
         # Add one since we incremented
-        git tag build-$((CURRENT_VERSION+1))-${CHANNEL}
-        git push origin build-$((CURRENT_VERSION+1))-${CHANNEL}
+        git tag build-$((CURRENT_VERSION+1))-${{ env.CHANNEL }}
+        git push origin build-$((CURRENT_VERSION+1))-${{ env.CHANNEL }}
