@@ -105,6 +105,7 @@ runs:
         else
           CHANNEL="${{ inputs.eas-channel }}"
         fi
+        echo "CHANNEL IS $CHANNEL"
 
         # Get the keys and determine the correct environment name
         EAS_KEYS=$(jq -r '.build | keys[]' eas.json)
@@ -125,6 +126,7 @@ runs:
         elif [[ "$CHANNEL" == "dev" ]]; then
           eas build --platform all --profile $EAS_ENV_DEV --no-wait --auto-submit --non-interactive
         elif [[ "$CHANNEL" == "fte" ]]; then
+          echo "Running feature build"
           # Get public name from PR title
           ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
           echo "Got id $ID"
@@ -140,27 +142,35 @@ runs:
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
           PR="${{ github.event.number }}"          
           jq --arg a "$PUBLIC_NAME" '.build.feature.env.EXPO_PUBLIC_NAME = $a' eas.json | sponge eas.json
+          echo "PUBLIC_NAME IS $PUBLIC_NAME"
 
           COMMENTS=$(curl -L \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ inputs.github-token }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments?per_page=50)
+          echo "COMMENT LENGTH: ${#COMMENTS}"
 
           # Get API URL from Vercel bot PR comment
           BODY=$(echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .body')
+          echo "BODY: $BODY"
           LINK=$(echo $BODY | grep -oP '\| \[Visit Preview]\(\K[^\)]+') 
+          echo "LINK: $LINK"
           URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
+          echo "URL: $URL"
           API_URL="https://$(echo $URL | cut -d/ -f3)"
+          echo "API_URL: $API_URL"
           jq --arg a "$API_URL" '.build.feature.env.EXPO_PUBLIC_API_URL = $a' eas.json | sponge eas.json
-          echo "API URL: $API_URL"
+          echo "Updated API URL to $API_URL"
 
           # Update app icon
           ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ICON' eas.json | tr -d '"')
+          echo "ICON_PATH: $ICON_PATH"
           ADAPTIVE_ICON_PATH=$(jq '.build.feature.env.EXPO_PUBLIC_ADAPTIVE_ICON' eas.json | tr -d '"')
+          echo "ADAPTIVE_ICON_PATH: $ADAPTIVE_ICON_PATH"
           convert $ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ICON_PATH"
           convert $ADAPTIVE_ICON_PATH -pointsize 378 -fill white -gravity center -stroke black -strokewidth 5 -draw "rotate -45 text 0,0 '$ID'" "$ADAPTIVE_ICON_PATH"
-          echo "ICON_PATH: $ICON_PATH"
+          echo "Converted icons"
 
           echo "EAS BUILD COMMAND: eas build --platform all --profile $EAS_ENV_FTE --no-wait --non-interactive"
 
