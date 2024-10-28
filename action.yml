@@ -84,6 +84,8 @@ runs:
     - name: EAS Build
       shell: bash
       run: |
+        echo "Input eas-channel value: '${{ inputs.eas-channel }}'"
+        echo "Raw input value: '${{ toJSON(inputs.eas-channel) }}'"
         cd ${{ inputs.project_path }}
 
         # Choose the correct EAS channel
