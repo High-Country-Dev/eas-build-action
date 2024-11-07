@@ -20,6 +20,12 @@ inputs:
   eas-channel:
     description: "Optional EAS channel (dev, stg, prd, none). Default is 'none' which defaults to the branch"
     default: "none"
+  pull-request-title:
+    description: "Optional pull request title"
+    default: ""
+  pull-request-head-sha:
+    description: "Optional pull request head sha"
+    default: ""
 
 runs:
   using: "composite"
@@ -88,8 +94,12 @@ runs:
         echo "Raw input value: '${{ toJSON(inputs.eas-channel) }}'"
         cd ${{ inputs.project_path }}
 
-        # Choose the correct EAS channel
-        if [ "${{ inputs.eas-channel }}" == "none" ] || [ -z "${{ inputs.eas-channel }}" ]; then
+        # Choose the 
+        if [ ! -z "${{ inputs.pull-request-title }}" ]; then
+            CHANNEL=fte
+
+        # correct EAS channel
+        elif [ "${{ inputs.eas-channel }}" == "none" ] || [ -z "${{ inputs.eas-channel }}" ]; then
           # Default to the branch
           if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.ref }}" == "refs/heads/master" ]]; then
             CHANNEL=prd
@@ -97,8 +107,6 @@ runs:
             CHANNEL=stg
           elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             CHANNEL=dev
-          elif [ ! -z "${{ github.event.pull_request }}" ]; then
-            CHANNEL=fte
           else
             echo "Branch not recognized for EAS build defaulting to production build with out auto submit"
             CHANNEL=prd
