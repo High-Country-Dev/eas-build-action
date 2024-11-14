@@ -53,6 +53,10 @@ runs:
         cd ${{ inputs.project_path }}
         pnpm install
 
+    - name: Update apt-get packages
+      shell: bash
+      run: sudo apt-get update
+
     - name: Install sponge, imagemagick etc
       shell: bash
       run: sudo apt-get install -y moreutils imagemagick ghostscript fonts-freefont-otf expect
