@@ -91,6 +91,13 @@ runs:
         echo "Input eas-channel value: '${{ inputs.eas-channel }}'"
         echo "Raw input value: '${{ toJSON(inputs.eas-channel) }}'"
         cd ${{ inputs.project_path }}
+        if [ ! -z "${{ github.event.pull_request }}" ]; then
+          COMMIT_HASH=${{ github.event.pull_request.head.sha }}
+        else
+          COMMIT_HASH=${{ github.sha }}
+        fi
+        echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
+        echo "Commit hash is: $COMMIT_HASH"
 
         # Choose the correct EAS channel
         if [ "${{ inputs.eas-channel }}" == "none" ] || [ -z "${{ inputs.eas-channel }}" ]; then
@@ -126,10 +133,16 @@ runs:
         echo "EAS_ENV_FTE: $EAS_ENV_FTE"
 
         if [[ "$CHANNEL" == "prd" ]]; then
+          # Update production env
+          jq --arg hash "$COMMIT_HASH" '.build.production.env.EXPO_PUBLIC_COMMIT_HASH = $hash' eas.json | sponge eas.json
           eas build --platform all --profile $EAS_ENV_PRD --no-wait --auto-submit --non-interactive
         elif [[ "$CHANNEL" == "stg" ]]; then
+          # Update staging env
+          jq --arg hash "$COMMIT_HASH" '.build.staging.env.EXPO_PUBLIC_COMMIT_HASH = $hash' eas.json | sponge eas.json
           eas build --platform all --profile $EAS_ENV_STG --no-wait --auto-submit --non-interactive
         elif [[ "$CHANNEL" == "dev" ]]; then
+          # Update development env
+          jq --arg hash "$COMMIT_HASH" '.build.development.env.EXPO_PUBLIC_COMMIT_HASH = $hash' eas.json | sponge eas.json
           eas build --platform all --profile $EAS_ENV_DEV --no-wait --auto-submit --non-interactive
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
@@ -147,7 +160,7 @@ runs:
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
           PR="${{ github.event.number }}"          
-          jq --arg a "$PUBLIC_NAME" '.build.feature.env.EXPO_PUBLIC_NAME = $a' eas.json | sponge eas.json
+          jq --arg a "$PUBLIC_NAME" --arg hash "$COMMIT_HASH" '.build.feature.env.EXPO_PUBLIC_NAME = $a | .build.feature.env.EXPO_PUBLIC_COMMIT_HASH = $hash' eas.json | sponge eas.json
           echo "PUBLIC_NAME IS $PUBLIC_NAME"
 
           COMMENTS=$(curl -L \
