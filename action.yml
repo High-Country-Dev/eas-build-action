@@ -154,22 +154,35 @@ runs:
           eas build --platform all --profile $EAS_ENV_DEV --no-wait --auto-submit --non-interactive
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
-          # Get public name from PR title
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          echo "Processing PR title: $PR_TITLE"
           
-          ID=$(echo "$PR_TITLE" | grep -oP '\[MD-\K[0-9]+')   
-          echo "Got id: $ID"
-        
+          # Get and debug PR title
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "Raw PR title: '$PR_TITLE'"
+          
+          # Try different grep patterns and debug output
+          echo "Attempting ID extraction..."
+          ID=$(echo "$PR_TITLE" | grep -oP '\[MD-\K[0-9]+(?=\])')
+          echo "Grep result: '$ID'"
+          
+          if [ -z "$ID" ]; then
+            echo "Failed to extract ID, trying alternative pattern..."
+            ID=$(echo "$PR_TITLE" | grep -o '[0-9]\+' | head -1)
+            echo "Alternative grep result: '$ID'"
+          fi
+          
           if [ -z "$ID" ]; then
             CHANNEL="feat"
+            echo "No ID found, defaulting to channel: $CHANNEL"
           else
             CHANNEL="feat-$ID"
+            echo "ID found: $ID, setting channel to: $CHANNEL"
           fi
-          echo "CHANNEL IS $CHANNEL"
-        
+          
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
+          echo "PROJECT_NAME: $PROJECT_NAME"
+          echo "PUBLIC_NAME: $PUBLIC_NAME"
+          
           PR="${{ github.event.pull_request.number }}"          
           
           jq --arg name "$PUBLIC_NAME" \
