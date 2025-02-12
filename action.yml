@@ -154,34 +154,18 @@ runs:
           eas build --platform all --profile $EAS_ENV_DEV --no-wait --auto-submit --non-interactive
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
+          echo "PR Title: ${{ github.event.pull_request.title }}"
           
-          # Debug GitHub context
-          echo "GitHub event type: ${{ github.event_name }}"
-          echo "GitHub ref: ${{ github.ref }}"
-          echo "PR number: ${{ github.event.pull_request.number }}"
-          
-          # Get PR title from GitHub context
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          echo "Raw PR title: '$PR_TITLE'"
-          
-          # Try different grep patterns and debug output
-          echo "Attempting ID extraction..."
-          ID=$(echo "$PR_TITLE" | grep -oP '\[MD-\K[0-9]+(?=\])')
-          echo "Grep result: '$ID'"
-          
-          if [ -z "$ID" ]; then
-            echo "Failed to extract ID, trying alternative pattern..."
-            ID=$(echo "$PR_TITLE" | grep -o '[0-9]\+' | head -1)
-            echo "Alternative grep result: '$ID'"
-          fi
-          
+          # Use the working pattern from the old code
+          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
+          echo "Got id: $ID"
+
           if [ -z "$ID" ]; then
             CHANNEL="feat"
-            echo "No ID found, defaulting to channel: $CHANNEL"
           else
             CHANNEL="feat-$ID"
-            echo "ID found: $ID, setting channel to: $CHANNEL"
           fi
+          echo "CHANNEL IS $CHANNEL"
           
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
