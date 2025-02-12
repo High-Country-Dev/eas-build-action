@@ -152,7 +152,7 @@ runs:
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
           # Get public name from PR title
-          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
+          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+' || echo "")   
           echo "Got id $ID"
 
           if [ -z "$ID" ]; then
