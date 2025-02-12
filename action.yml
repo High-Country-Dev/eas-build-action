@@ -85,15 +85,15 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
-        echo "Setting iOS version to $CURRENT_VERSION..."
         for platform in ios android
         do
-          expect << EOF
-          spawn pnpm -F expo exec eas build:version:set --platform $platform
-          expect "What version would you like to set?"
-          send "$CURRENT_VERSION\r"
-          expect eof
-          EOF
+          echo "Setting $platform version to $CURRENT_VERSION..."
+          expect -c "
+            spawn pnpm -F expo exec eas build:version:set --platform $platform
+            expect \"What version would you like to set?\"
+            send \"$CURRENT_VERSION\r\"
+            expect eof
+          "
         done
 
     - name: EAS Build
