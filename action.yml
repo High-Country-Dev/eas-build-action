@@ -65,8 +65,8 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
-        ANDROID_VERSION=$(pnpm -F expo exec eas build:version:get --platform android | grep "Android versionCode" | awk '{print $NF}') || echo "1"
-        IOS_VERSION=$(pnpm -F expo exec eas build:version:get --platform ios | grep "iOS buildNumber" | awk '{print $NF}') || echo "1"
+        ANDROID_VERSION=$(pnpm -F expo exec eas build:version:get --platform android | grep "Android versionCode" | awk '{print $NF}' || echo "1")
+        IOS_VERSION=$(pnpm -F expo exec eas build:version:get --platform ios | grep "iOS buildNumber" | awk '{print $NF}' || echo "1")
         CURRENT_VERSION=$(( ANDROID_VERSION > IOS_VERSION ? ANDROID_VERSION : IOS_VERSION ))
         echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
         echo "CURRENT VERSION IS ${CURRENT_VERSION}"
