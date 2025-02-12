@@ -91,6 +91,16 @@ runs:
         NEXT_VERSION=$(( ANDROID_VERSION > IOS_VERSION ? ANDROID_VERSION : IOS_VERSION ))
         NEXT_VERSION=$(( NEXT_VERSION + 1 ))
 
+        # Set the new version for both platforms
+        for platform in ios android
+        do
+          expect << EOF
+          set timeout -1
+          spawn pnpm -F expo exec eas build:version:set --platform $platform --new-version $NEXT_VERSION
+          expect eof
+        EOF
+        done
+
         # Export the version for subsequent steps
         echo "CURRENT_VERSION=$NEXT_VERSION" >> $GITHUB_ENV
         echo "CURRENT VERSION IS ${NEXT_VERSION}"
