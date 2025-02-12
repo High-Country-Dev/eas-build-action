@@ -76,8 +76,6 @@ runs:
         
         # Use max of existing versions and increment by 1
         CURRENT_VERSION=$(( ANDROID_VERSION > IOS_VERSION ? ANDROID_VERSION : IOS_VERSION ))
-        CURRENT_VERSION=$((CURRENT_VERSION + 1))
-        
         echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
         echo "CURRENT VERSION IS ${CURRENT_VERSION}"
 
@@ -157,20 +155,27 @@ runs:
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
           # Get public name from PR title
-          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
-          echo "Got id $ID"
-
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "Processing PR title: $PR_TITLE"
+          
+          ID=$(echo "$PR_TITLE" | grep -oP '\[MD-\K[0-9]+')   
+          echo "Got id: $ID"
+        
           if [ -z "$ID" ]; then
-            CHANNEL=feat
+            CHANNEL="feat"
           else
-            CHANNEL=feat-$ID
+            CHANNEL="feat-$ID"
           fi
           echo "CHANNEL IS $CHANNEL"
-
+        
           PROJECT_NAME="${{ github.event.repository.name }}"
           PUBLIC_NAME="${PROJECT_NAME^} $ID"
-          PR="${{ github.event.number }}"          
-          jq --arg a "$PUBLIC_NAME" --arg hash "$COMMIT_HASH" '.build.feature.env.EXPO_PUBLIC_NAME = $a | .build.feature.env.EXPO_PUBLIC_COMMIT_HASH = $hash' eas.json | sponge eas.json
+          PR="${{ github.event.pull_request.number }}"          
+          
+          jq --arg name "$PUBLIC_NAME" \
+             --arg hash "$COMMIT_HASH" \
+             '.build.feature.env.EXPO_PUBLIC_NAME = $name | .build.feature.env.EXPO_PUBLIC_COMMIT_HASH = $hash' \
+             eas.json | sponge eas.json
           echo "PUBLIC_NAME IS $PUBLIC_NAME"
 
           COMMENTS=$(curl -L \
