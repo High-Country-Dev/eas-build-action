@@ -86,9 +86,15 @@ runs:
       run: |
         cd ${{ inputs.project_path }}
         echo "Setting iOS version to $CURRENT_VERSION..."
-        pnpm -F expo exec eas build:version:set --platform ios --version $CURRENT_VERSION 2>/dev/null || echo "Failed to set iOS version"
-        echo "Setting Android version to $CURRENT_VERSION..."
-        pnpm -F expo exec eas build:version:set --platform android --version $CURRENT_VERSION 2>/dev/null || echo "Failed to set Android version"
+        for platform in ios android
+        do
+          expect << EOF
+          spawn pnpm -F expo exec eas build:version:set --platform $platform
+          expect "What version would you like to set?"
+          send "$CURRENT_VERSION\r"
+          expect eof
+          EOF
+        done
 
     - name: EAS Build
       shell: bash
