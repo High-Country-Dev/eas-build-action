@@ -65,10 +65,10 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
-             echo "Getting Android version..."
+        echo "Getting Android version..."
         ANDROID_VERSION=$(pnpm -F expo exec eas build:version:get --platform android 2>/dev/null | grep "Android versionCode" | awk '{print $NF}') || ANDROID_VERSION=0
         echo "Android version: $ANDROID_VERSION"
-        
+
         echo "Getting iOS version..."
         IOS_VERSION=$(pnpm -F expo exec eas build:version:get --platform ios 2>/dev/null | grep "iOS buildNumber" | awk '{print $NF}') || IOS_VERSION=0
         echo "iOS version: $IOS_VERSION"
