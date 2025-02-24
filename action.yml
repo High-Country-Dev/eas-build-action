@@ -65,8 +65,13 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.project_path }}
-        ANDROID_VERSION=$(pnpm -F expo exec eas build:version:get --platform android | grep "Android versionCode" | awk '{print $NF}')
-        IOS_VERSION=$(pnpm -F expo exec eas build:version:get --platform ios | grep "iOS buildNumber" | awk '{print $NF}')
+        echo "Getting Android version..."
+        ANDROID_VERSION=$(pnpm -F expo exec eas build:version:get --platform android 2>/dev/null | grep "Android versionCode" | awk '{print $NF}') || ANDROID_VERSION=0
+        echo "Android version: $ANDROID_VERSION"
+
+        echo "Getting iOS version..."
+        IOS_VERSION=$(pnpm -F expo exec eas build:version:get --platform ios 2>/dev/null | grep "iOS buildNumber" | awk '{print $NF}') || IOS_VERSION=0
+        echo "iOS version: $IOS_VERSION"
         CURRENT_VERSION=$(( ANDROID_VERSION > IOS_VERSION ? ANDROID_VERSION : IOS_VERSION ))
         echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
         echo "CURRENT VERSION IS ${CURRENT_VERSION}"
@@ -147,7 +152,7 @@ runs:
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
           # Get public name from PR title
-          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+')   
+          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+' || echo "")   
           echo "Got id $ID"
 
           if [ -z "$ID" ]; then
