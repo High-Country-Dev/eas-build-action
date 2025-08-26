@@ -232,11 +232,11 @@ runs:
             exit $EAS_EXIT_CODE
           fi
 
-          ANDROID_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'Android build details: \K[^ )]+')
+          ANDROID_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'Android logs: \K[^ )]+')
           echo "ANDROID_BUILD_LINK=$ANDROID_BUILD_LINK" >> $GITHUB_ENV
           echo "ANDROID_BUILD_LINK IS ${ANDROID_BUILD_LINK}"
 
-          IOS_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'iOS build details: \K[^ )]+') 
+          IOS_BUILD_LINK=$(echo $EAS_STDOUT | grep -oP 'iOS logs: \K[^ )]+') 
           echo "IOS_BUILD_LINK=$IOS_BUILD_LINK" >> $GITHUB_ENV
           echo "IOS_BUILD_LINK IS ${IOS_BUILD_LINK}"
 
