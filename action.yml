@@ -178,7 +178,7 @@ runs:
           # Get API URL from Vercel bot PR comment
           BODY=$(echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .body')
           echo "BODY: $BODY"
-          LINK=$(echo $BODY | grep -oP '\| \[Visit Preview]\(\K[^\)]+') 
+          LINK=$(echo $BODY | grep -oP '\| \[Preview]\(\K[^\)]+') 
           echo "LINK: $LINK"
           URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
           echo "URL: $URL"
