@@ -189,22 +189,58 @@ runs:
           jq --arg a "$PUBLIC_NAME" --arg hash "$COMMIT_HASH" '.build.feature.env.EXPO_PUBLIC_NAME = $a | .build.feature.env.EXPO_PUBLIC_COMMIT_HASH = $hash' eas.json | sponge eas.json
           echo "PUBLIC_NAME IS $PUBLIC_NAME"
 
-          COMMENTS=$(curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ inputs.github-token }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments?per_page=100)
-          echo "COMMENT LENGTH: ${#COMMENTS}"
+          # Get preview link from Vercel bot comment
+          echo "Waiting for Vercel bot comment..."
+          RETRY_COUNT=0
+          MAX_RETRIES=10
+          RETRY_DELAY=60  # 1 minute
+          VERCEL_FOUND=false
 
-          # Get API URL from Vercel bot PR comment
-          BODY=$(echo $COMMENTS | jq '.[] | select(.user.login == "vercel[bot]") | .body')
-          echo "BODY: $BODY"
-          LINK=$(echo $BODY | grep -oP '\| \[Preview]\(\K[^\)]+') 
-          echo "LINK: $LINK"
-          URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
-          echo "URL: $URL"
-          API_URL="https://$(echo $URL | cut -d/ -f3)"
-          echo "API_URL: $API_URL"
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES to find Vercel bot comment..."
+            
+            COMMENTS=$(curl -L \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ inputs.github-token }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments?per_page=100)
+            echo "COMMENT LENGTH: ${#COMMENTS}"
+
+            BODY=$(echo $COMMENTS | jq -r '.[] | select(.user.login == "vercel[bot]") | .body')
+            echo "BODY: $BODY"
+            
+            if [ ! -z "$BODY" ] && [ "$BODY" != "null" ]; then
+              LINK=$(echo $BODY | grep -oP '\| \[Preview]\(\K[^\)]+' || echo "")
+              echo "LINK: $LINK"
+              
+              if [ ! -z "$LINK" ]; then
+                echo "Found Vercel preview link: $LINK"
+                URL=$(curl -Ls -o /dev/null -w %{url_effective} $LINK)
+                echo "URL: $URL"
+                API_URL="https://$(echo $URL | cut -d/ -f3)"
+                echo "API_URL: $API_URL"
+                VERCEL_FOUND=true
+                break
+              else
+                echo "Vercel bot comment found but no preview link detected"
+              fi
+            else
+              echo "Vercel bot comment not found yet"
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "Waiting $RETRY_DELAY seconds before next attempt..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          if [ "$VERCEL_FOUND" = false ]; then
+            echo "ERROR: Vercel bot comment with preview link not found after $MAX_RETRIES attempts (10 minutes total)"
+            echo "This usually means the Vercel deployment failed or is taking longer than expected"
+            echo "Check the Vercel dashboard for the build status"
+            exit 1
+          fi
           jq --arg a "$API_URL" '.build.feature.env.EXPO_PUBLIC_API_URL = $a' eas.json | sponge eas.json
           echo "Updated API URL to $API_URL"
 
