@@ -172,8 +172,11 @@ runs:
           fi
         elif [[ "$CHANNEL" == "fte" ]]; then
           echo "Running feature build"
-          # Get public name from PR title
-          ID=$(echo ${{ github.event.pull_request.title }} | grep -oP '\[MD-\K[0-9]+' || echo "")   
+          # Get public name from PR title or branch name. Should be case-insensitive, e.g. MD-8118 or md-8118
+          ID=$(echo ${{ github.event.pull_request.title }} | grep -ioP '(?i)(?:MD-)\K[0-9]+' | head -1 || echo "")
+          if [ -z "$ID" ]; then
+            ID=$(echo ${{ github.head_ref }} | grep -ioP '(?i)(?:MD-)\K[0-9]+' | head -1 || echo "")
+          fi
           echo "Got id $ID"
 
           if [ -z "$ID" ]; then
